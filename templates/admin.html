@@ -12,6 +12,45 @@
             </a>
         {% endif %}
     </div>
+
+    <!-- Formulaire de filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="promotion" class="form-label">Promotion</label>
+                    <select name="promotion" id="promotion" class="form-select">
+                        <option value="">Toutes les promotions</option>
+                        {% for promo in promotions %}
+                        <option value="{{ promo }}" {% if selected_promotion and selected_promotion|int == promo %}selected{% endif %}>{{ promo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="ville" class="form-label">Ville</label>
+                    <select name="ville" id="ville" class="form-select">
+                        <option value="">Toutes les villes</option>
+                        {% for ville in villes %}
+                        <option value="{{ ville }}" {% if selected_ville == ville %}selected{% endif %}>{{ ville }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="pays" class="form-label">Pays</label>
+                    <select name="pays" id="pays" class="form-select">
+                        <option value="">Tous les pays</option>
+                        {% for pays in pays_list %}
+                        <option value="{{ pays }}" {% if selected_pays == pays %}selected{% endif %}>{{ pays }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Filtrer</button>
+                    <a href="{{ url_for('admin') }}" class="btn btn-secondary">Réinitialiser</a>
+                </div>
+            </form>
+        </div>
+    </div>
     
     {% if members %}
         <div class="table-responsive">
@@ -43,7 +82,19 @@
             </table>
         </div>
         <div class="mt-3">
-            <p class="text-muted">Nombre total de membres : {{ members|length }}</p>
+            <p class="text-muted">
+                {% if request.args %}
+                    {{ members|length }} membre(s) trouvé(s)
+                    {% if selected_promotion or selected_ville or selected_pays %}
+                        (Filtres actifs :
+                        {% if selected_promotion %}Promotion {{ selected_promotion }}{% endif %}
+                        {% if selected_ville %}{% if selected_promotion %}, {% endif %}Ville "{{ selected_ville }}"{% endif %}
+                        {% if selected_pays %}{% if selected_promotion or selected_ville %}, {% endif %}Pays "{{ selected_pays }}"{% endif %})
+                    {% endif %}
+                {% else %}
+                    Nombre total de membres : {{ members|length }}
+                {% endif %}
+            </p>
         </div>
     {% else %}
         <div class="alert alert-info">

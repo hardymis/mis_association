@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Annuaire des Membres{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Liste des membres -->
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">Filtres</h3>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="mb-3">
+                        <div class="mb-3">
+                            <label for="promo" class="form-label">Promotion</label>
+                            <select class="form-select" id="promo" name="promo">
+                                <option value="">Toutes les promotions</option>
+                                {% for promo in promos %}
+                                <option value="{{ promo }}" {% if selected_promo|string == promo|string %}selected{% endif %}>{{ promo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pays" class="form-label">Pays</label>
+                            <select class="form-select" id="pays" name="pays">
+                                <option value="">Tous les pays</option>
+                                {% for pays_item in pays %}
+                                <option value="{{ pays_item }}" {% if selected_pays == pays_item %}selected{% endif %}>{{ pays_item }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ville" class="form-label">Ville</label>
+                            <select class="form-select" id="ville" name="ville">
+                                <option value="">Toutes les villes</option>
+                                {% for ville in villes %}
+                                <option value="{{ ville }}" {% if selected_ville == ville %}selected{% endif %}>{{ ville }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Filtrer</button>
+                            <a href="{{ url_for('directory') }}" class="btn btn-secondary">Réinitialiser</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Annuaire des Membres</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for member in members %}
+                        <a href="#" class="list-group-item list-group-item-action" 
+                           data-lat="{{ member.latitude or '' }}" 
+                           data-lng="{{ member.longitude or '' }}"
+                           onclick="centerMapOn('{{ member.latitude or 0 }}', '{{ member.longitude or 0 }}', '{{ member.nom }} {{ member.prenoms }}')">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ member.nom }} {{ member.prenoms }}</h5>
+                                <small>Promo {{ member.promo }}</small>
+                            </div>
+                            <p class="mb-1">{{ member.ville_residence }}, {{ member.pays_residence }}</p>
+                            <small>{{ member.email }}</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Carte -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body p-0">
+                    <div id="map"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .list-group {
+        max-height: calc(100vh - 600px);
+        min-height: 200px;
+        overflow-y: auto;
+    }
+    .form-label {
+        margin-bottom: 0.25rem;
+    }
+    .mb-3 {
+        margin-bottom: 0.75rem !important;
+    }
+    .card-body {
+        padding: 1rem;
+    }
+    #map {
+        height: calc(100vh - 40px);
+        min-height: 600px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Initialisation de la carte et des marqueurs
+    document.addEventListener('DOMContentLoaded', function() {
+        var map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var markers = [];
+        var memberData = JSON.parse('{{ members|tojson|safe }}');
+
+        // Ajouter les marqueurs pour chaque membre
+        memberData.forEach(function(member) {
+            if (member.latitude && member.longitude) {
+                var marker = L.marker([member.latitude, member.longitude]);
+                marker.bindPopup("<b>" + member.nom + " " + member.prenoms + "</b><br>Promo " + member.promo + "<br>" + member.ville_residence + ", " + member.pays_residence);
+                markers.push(marker);
+                marker.addTo(map);
+            }
+        });
+
+        // Centrer la carte sur un membre
+        window.centerMapOn = function(lat, lng, name) {
+            lat = parseFloat(lat);
+            lng = parseFloat(lng);
+            if (lat && lng) {
+                map.setView([lat, lng], 10);
+                markers.forEach(function(marker) {
+                    if (marker.getLatLng().lat === lat && marker.getLatLng().lng === lng) {
+                        marker.openPopup();
+                    }
+                });
+            }
+        };
+
+        // Ajuster la vue pour voir tous les marqueurs
+        if (markers.length > 0) {
+            var group = L.featureGroup(markers);
+            map.fitBounds(group.getBounds());
+        }
+    });
+</script>
+{% endblock %}

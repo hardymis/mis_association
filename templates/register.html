@@ -2,6 +2,28 @@
 
 {% block title %}Inscription{% endblock %}
 
+{% block extra_css %}
+<style>
+    input[list] {
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    input[list]:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
@@ -55,7 +77,8 @@
             </div>
             <div class="mb-3">
                 {{ form.ville_residence.label(class="form-label") }}
-                {{ form.ville_residence(class="form-control") }}
+                <input type="text" name="ville_residence" id="ville_residence" class="form-control" list="villes-list" placeholder="Commencez à taper une ville" required>
+                <datalist id="villes-list"></datalist>
                 {% if form.ville_residence.errors %}
                     {% for error in form.ville_residence.errors %}
                         <div class="text-danger">{{ error }}</div>
@@ -64,7 +87,12 @@
             </div>
             <div class="mb-3">
                 {{ form.pays_residence.label(class="form-label") }}
-                {{ form.pays_residence(class="form-control") }}
+                <input type="text" name="pays_residence" id="pays_residence" class="form-control" list="pays-list" placeholder="Sélectionnez un pays" required>
+                <datalist id="pays-list">
+                    {% for pays in pays_list %}
+                    <option value="{{ pays }}">{{ pays }}</option>
+                    {% endfor %}
+                </datalist>
                 {% if form.pays_residence.errors %}
                     {% for error in form.pays_residence.errors %}
                         <div class="text-danger">{{ error }}</div>
@@ -75,4 +103,51 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const paysInput = document.getElementById('pays_residence');
+        const villeInput = document.getElementById('ville_residence');
+        const villesList = document.getElementById('villes-list');
+
+        // Vider la liste des villes quand le pays change
+        paysInput.addEventListener('change', function() {
+            villeInput.value = '';
+            villesList.innerHTML = '';
+        });
+
+        // Mettre à jour les suggestions de villes lors de la saisie
+        let timeoutId;
+        villeInput.addEventListener('input', function() {
+            clearTimeout(timeoutId);
+            const pays = paysInput.value;
+            const recherche = this.value;
+
+            if (recherche.length >= 2 && pays) {
+                timeoutId = setTimeout(function() {
+                    fetch(`{{ url_for('get_cities') }}?country=${encodeURIComponent(pays)}&q=${encodeURIComponent(recherche)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            villesList.innerHTML = '';
+                            data.forEach(city => {
+                                const option = document.createElement('option');
+                                option.value = city.name;
+                                villesList.appendChild(option);
+                            });
+                        });
+                }, 300);
+            }
+        });
+
+        // Validation du formulaire
+        document.querySelector('form').addEventListener('submit', function(e) {
+            if (!paysInput.value || !villeInput.value) {
+                e.preventDefault();
+                alert('Veuillez sélectionner un pays et une ville');
+            }
+        });
+    });
+</script>
 {% endblock %}
