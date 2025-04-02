@@ -1,39 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, make_response, jsonify
 import requests
 
-# Liste des pays en français
-COUNTRIES = [
-    'Afghanistan', 'Afrique du Sud', 'Albanie', 'Algérie', 'Allemagne', 'Andorre', 'Angola',
-    'Antigua-et-Barbuda', 'Arabie saoudite', 'Argentine', 'Arménie', 'Australie', 'Autriche',
-    'Azerbaïdjan', 'Bahamas', 'Bahreïn', 'Bangladesh', 'Barbade', 'Belgique', 'Bélize',
-    'Bénin', 'Bhoutan', 'Biélorussie', 'Birmanie', 'Bolivie', 'Bosnie-Herzégovine',
-    'Botswana', 'Brésil', 'Brunei', 'Bulgarie', 'Burkina Faso', 'Burundi', 'Cambodge',
-    'Cameroun', 'Canada', 'Cap-Vert', 'Chili', 'Chine', 'Chypre', 'Colombie', 'Comores',
-    'Congo', 'Corée du Nord', 'Corée du Sud', 'Costa Rica', 'Côte d\'Ivoire', 'Croatie',
-    'Cuba', 'Danemark', 'Djibouti', 'Dominique', 'Égypte', 'Émirats arabes unis',
-    'Équateur', 'Érythrée', 'Espagne', 'Estonie', 'États-Unis', 'Éthiopie', 'Fidji',
-    'Finlande', 'France', 'Gabon', 'Gambie', 'Géorgie', 'Ghana', 'Grèce', 'Grenade',
-    'Guatemala', 'Guinée', 'Guinée-Bissau', 'Guinée équatoriale', 'Guyana', 'Haïti',
-    'Honduras', 'Hongrie', 'Îles Marshall', 'Îles Salomon', 'Inde', 'Indonésie', 'Irak',
-    'Iran', 'Irlande', 'Islande', 'Israël', 'Italie', 'Jamaïque', 'Japon', 'Jordanie',
-    'Kazakhstan', 'Kenya', 'Kirghizistan', 'Kiribati', 'Koweït', 'Laos', 'Lesotho',
-    'Lettonie', 'Liban', 'Libéria', 'Libye', 'Liechtenstein', 'Lituanie', 'Luxembourg',
-    'Macédoine', 'Madagascar', 'Malaisie', 'Malawi', 'Maldives', 'Mali', 'Malte', 'Maroc',
-    'Maurice', 'Mauritanie', 'Mexique', 'Micronésie', 'Moldavie', 'Monaco', 'Mongolie',
-    'Monténégro', 'Mozambique', 'Namibie', 'Nauru', 'Népal', 'Nicaragua', 'Niger',
-    'Nigeria', 'Norvège', 'Nouvelle-Zélande', 'Oman', 'Ouganda', 'Ouzbékistan',
-    'Pakistan', 'Palaos', 'Palestine', 'Panama', 'Papouasie-Nouvelle-Guinée', 'Paraguay',
-    'Pays-Bas', 'Pérou', 'Philippines', 'Pologne', 'Portugal', 'Qatar', 'République centrafricaine',
-    'République démocratique du Congo', 'République dominicaine', 'République tchèque',
-    'Roumanie', 'Royaume-Uni', 'Russie', 'Rwanda', 'Saint-Kitts-et-Nevis', 'Saint-Vincent-et-les-Grenadines',
-    'Sainte-Lucie', 'Saint-Marin', 'Salvador', 'Samoa', 'Sao Tomé-et-Principe', 'Sénégal',
-    'Serbie', 'Seychelles', 'Sierra Leone', 'Singapour', 'Slovaquie', 'Slovénie', 'Somalie',
-    'Soudan', 'Soudan du Sud', 'Sri Lanka', 'Suède', 'Suisse', 'Suriname', 'Swaziland',
-    'Syrie', 'Tadjikistan', 'Tanzanie', 'Tchad', 'Thaïlande', 'Timor oriental', 'Togo',
-    'Tonga', 'Trinité-et-Tobago', 'Tunisie', 'Turkménistan', 'Turquie', 'Tuvalu',
-    'Ukraine', 'Uruguay', 'Vanuatu', 'Vatican', 'Venezuela', 'Viêt Nam', 'Yémen',
-    'Zambie', 'Zimbabwe'
-]
+import pycountry
+
+# Liste des pays en français avec leurs noms en anglais
+COUNTRIES = sorted([country.name for country in pycountry.countries])
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, SubmitField, PasswordField
@@ -63,7 +34,7 @@ class Admin(UserMixin, db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -273,7 +244,24 @@ def admin():
 @app.route('/export-csv')
 @login_required
 def export_csv():
-    members = Member.query.order_by(Member.nom).all()
+    # Get filter values from request
+    promo_filter = request.args.get('promo', '')
+    pays_filter = request.args.get('pays', '')
+    ville_filter = request.args.get('ville', '')
+
+    # Base query
+    query = Member.query
+
+    # Apply filters
+    if promo_filter:
+        query = query.filter(Member.promo == int(promo_filter))
+    if pays_filter:
+        query = query.filter(Member.pays_residence.ilike(f'%{pays_filter}%'))
+    if ville_filter:
+        query = query.filter(Member.ville_residence.ilike(f'%{ville_filter}%'))
+
+    # Get filtered members
+    members = query.order_by(Member.nom).all()
     
     # Créer un buffer pour le CSV
     si = StringIO()
@@ -294,8 +282,18 @@ def export_csv():
             member.pays_residence
         ])
     
+    # Générer le nom du fichier en fonction des filtres
+    filename = 'membres_mis'
+    if promo_filter:
+        filename += f'_promo{promo_filter}'
+    if pays_filter:
+        filename += f'_{pays_filter}'
+    if ville_filter:
+        filename += f'_{ville_filter}'
+    filename += '.csv'
+    
     output = make_response(si.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename=membres_mis.csv"
+    output.headers["Content-Disposition"] = f"attachment; filename={filename}"
     output.headers["Content-type"] = "text/csv; charset=utf-8"
     return output
 
@@ -339,6 +337,23 @@ def create_admin():
         db.session.commit()
         print(f'Administrateur {username} créé avec succès!')
 
+@app.cli.command('reset-admin')
+def reset_admin():
+    """Réinitialiser l'administrateur avec les identifiants par défaut"""
+    with app.app_context():
+        # Supprimer tous les administrateurs existants
+        Admin.query.delete()
+        
+        # Créer le nouvel administrateur
+        admin = Admin(username='admin')
+        admin.set_password('admin')
+        
+        db.session.add(admin)
+        db.session.commit()
+        print('Administrateur réinitialisé avec succès!')
+        print('Nom d\'utilisateur: admin')
+        print('Mot de passe: admin')
+
 # Routes pour l'autocomplétion
 @app.route('/api/countries')
 def get_countries():
@@ -375,4 +390,4 @@ def get_cities():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True, port=5009)
+    app.run(debug=True, port=5010)

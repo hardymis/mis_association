@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Liste des membres inscrits</h2>
         {% if members %}
-            <a href="{{ url_for('export_csv') }}" class="btn btn-success">
+            <a href="{{ url_for('export_csv', promo=request.args.get('promotion'), pays=request.args.get('pays'), ville=request.args.get('ville')) }}" class="btn btn-success">
                 <i class="bi bi-download"></i> Télécharger en CSV
             </a>
         {% endif %}
