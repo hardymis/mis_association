@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mb-4">Inscription Membre</h2>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                {{ form.nom.label(class="form-label") }}
+                {{ form.nom(class="form-control") }}
+                {% if form.nom.errors %}
+                    {% for error in form.nom.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.prenoms.label(class="form-label") }}
+                {{ form.prenoms(class="form-control") }}
+                {% if form.prenoms.errors %}
+                    {% for error in form.prenoms.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.promo.label(class="form-label") }}
+                {{ form.promo(class="form-control") }}
+                {% if form.promo.errors %}
+                    {% for error in form.promo.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.telephone.label(class="form-label") }}
+                {{ form.telephone(class="form-control") }}
+                {% if form.telephone.errors %}
+                    {% for error in form.telephone.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="form-control") }}
+                {% if form.email.errors %}
+                    {% for error in form.email.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.ville_residence.label(class="form-label") }}
+                {{ form.ville_residence(class="form-control") }}
+                {% if form.ville_residence.errors %}
+                    {% for error in form.ville_residence.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.pays_residence.label(class="form-label") }}
+                {{ form.pays_residence(class="form-control") }}
+                {% if form.pays_residence.errors %}
+                    {% for error in form.pays_residence.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            {{ form.submit(class="btn btn-primary") }}
+        </form>
+    </div>
+</div>
+{% endblock %}

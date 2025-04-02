@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <h1 class="mb-4">Bienvenue sur le portail des membres MIS Association</h1>
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Nouveau membre ?</h5>
+                    <p class="card-text">Inscrivez-vous en tant que membre de l'association.</p>
+                    <a href="{{ url_for('register') }}" class="btn btn-primary">S'inscrire</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Déjà membre ?</h5>
+                    <p class="card-text">Vérifiez ou modifiez vos informations.</p>
+                    <a href="{{ url_for('search') }}" class="btn btn-secondary">Rechercher</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
