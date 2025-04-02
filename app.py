@@ -90,9 +90,34 @@ class MemberForm(FlaskForm):
                                          'data-placeholder': 'Sélectionnez un pays'})
     submit = SubmitField('Enregistrer')
 
+# Exemple d'événements (plus tard, nous les stockerons en base de données)
+EVENTS = [
+    {
+        'title': 'Afterwork MIS à Paris',
+        'description': 'Rejoignez-nous pour un afterwork convivial au cœur de Paris. Une occasion unique de networker avec d\'autres diplômés MIS.',
+        'date': '15 avril 2025',
+        'image': 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
+        'link': '#'
+    },
+    {
+        'title': 'Conférence IA & Big Data',
+        'description': 'Une journée de conférences sur les dernières tendances en IA et Big Data, animée par des experts du domaine.',
+        'date': '5 mai 2025',
+        'image': 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=80',
+        'link': '#'
+    },
+    {
+        'title': 'Workshop Cloud Computing',
+        'description': 'Workshop pratique sur les architectures cloud modernes. Places limitées, inscrivez-vous rapidement !',
+        'date': '20 mai 2025',
+        'image': 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80',
+        'link': '#'
+    }
+]
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', events=EVENTS)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():

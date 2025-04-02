@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800px" height="600px" viewBox="0 0 800 600" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <!-- Nodes -->
+        <circle fill="#FFFFFF" cx="400" cy="300" r="40"/>
+        <circle fill="#FFFFFF" cx="250" cy="200" r="30"/>
+        <circle fill="#FFFFFF" cx="550" cy="200" r="30"/>
+        <circle fill="#FFFFFF" cx="250" cy="400" r="30"/>
+        <circle fill="#FFFFFF" cx="550" cy="400" r="30"/>
+        <circle fill="#FFFFFF" cx="150" cy="300" r="25"/>
+        <circle fill="#FFFFFF" cx="650" cy="300" r="25"/>
+        
+        <!-- Connections -->
+        <line stroke="#FFFFFF" stroke-width="2" x1="400" y1="300" x2="250" y2="200"/>
+        <line stroke="#FFFFFF" stroke-width="2" x1="400" y1="300" x2="550" y2="200"/>
+        <line stroke="#FFFFFF" stroke-width="2" x1="400" y1="300" x2="250" y2="400"/>
+        <line stroke="#FFFFFF" stroke-width="2" x1="400" y1="300" x2="550" y2="400"/>
+        <line stroke="#FFFFFF" stroke-width="2" x1="400" y1="300" x2="150" y2="300"/>
+        <line stroke="#FFFFFF" stroke-width="2" x1="400" y1="300" x2="650" y2="300"/>
+        
+        <!-- Secondary Connections -->
+        <line stroke="#FFFFFF" stroke-width="1" x1="250" y1="200" x2="150" y2="300"/>
+        <line stroke="#FFFFFF" stroke-width="1" x1="250" y1="400" x2="150" y2="300"/>
+        <line stroke="#FFFFFF" stroke-width="1" x1="550" y1="200" x2="650" y2="300"/>
+        <line stroke="#FFFFFF" stroke-width="1" x1="550" y1="400" x2="650" y2="300"/>
+    </g>
+</svg>
