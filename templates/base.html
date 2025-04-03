@@ -17,18 +17,68 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('register') }}">Inscription</a>
+                    <!-- Menu Réseau -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="reseauDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-people-fill"></i> Réseau
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('directory') }}">Annuaire des membres</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('register') }}">Devenir membre</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('search') }}">Rechercher un membre</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Carte du réseau</a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('search') }}">Rechercher</a>
+
+                    <!-- Menu Carrière -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="carriereDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-briefcase-fill"></i> Carrière
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Offres d'emploi</a></li>
+                            <li><a class="dropdown-item" href="#">Mentorat</a></li>
+                            <li><a class="dropdown-item" href="#">Conseils carrière</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Déposer une offre</a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('directory') }}">Annuaire</a>
+
+                    <!-- Menu Événements -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="evenementsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-calendar-event-fill"></i> Événements
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Tous les événements</a></li>
+                            <li><a class="dropdown-item" href="#">Afterworks</a></li>
+                            <li><a class="dropdown-item" href="#">Conférences</a></li>
+                            <li><a class="dropdown-item" href="#">Webinaires</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Proposer un événement</a></li>
+                        </ul>
                     </li>
+
+                    <!-- Menu Services -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-gear-fill"></i> Services
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Assistance juridique</a></li>
+                            <li><a class="dropdown-item" href="#">Coaching</a></li>
+                            <li><a class="dropdown-item" href="#">Aide à l'installation</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Tous les services</a></li>
+                        </ul>
+                    </li>
+
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin') }}">Administration</a>
+                        <a class="nav-link" href="{{ url_for('admin') }}">
+                            <i class="bi bi-shield-lock-fill"></i> Administration
+                        </a>
                     </li>
                     {% endif %}
                 </ul>
