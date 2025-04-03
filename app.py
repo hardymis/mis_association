@@ -165,18 +165,18 @@ def network_map():
 
     # Appliquer les filtres
     if selected_promo:
-        query = query.filter(Member.promotion == selected_promo)
+        query = query.filter(Member.promo == selected_promo)
     if selected_pays:
-        query = query.filter(Member.pays == selected_pays)
+        query = query.filter(Member.pays_residence == selected_pays)
     if selected_ville:
-        query = query.filter(Member.ville == selected_ville)
+        query = query.filter(Member.ville_residence == selected_ville)
 
     # Récupérer les listes pour les filtres
-    promos = db.session.query(Member.promotion).distinct().order_by(Member.promotion.desc()).all()
+    promos = db.session.query(Member.promo).distinct().order_by(Member.promo.desc()).all()
     promos = [p[0] for p in promos]
-    pays = db.session.query(Member.pays).distinct().order_by(Member.pays).all()
+    pays = db.session.query(Member.pays_residence).distinct().order_by(Member.pays_residence).all()
     pays = [p[0] for p in pays]
-    villes = db.session.query(Member.ville).distinct().order_by(Member.ville).all()
+    villes = db.session.query(Member.ville_residence).distinct().order_by(Member.ville_residence).all()
     villes = [v[0] for v in villes]
 
     # Récupérer les membres avec leurs coordonnées
@@ -185,7 +185,7 @@ def network_map():
         'name': f"{m.prenom} {m.nom}",
         'lat': m.latitude,
         'lng': m.longitude,
-        'info': f"Promotion {m.promotion}<br>Ville: {m.ville}, {m.pays}"
+        'info': f"Promotion {m.promo}<br>Ville: {m.ville_residence}, {m.pays_residence}"
     } for m in members if m.latitude and m.longitude]
 
     return render_template('network_map.html',
@@ -200,20 +200,20 @@ def network_map():
 @app.route('/directory')
 def directory():
     # Get filter values from request
-    promo_filter = request.args.get('promo', '')
-    pays_filter = request.args.get('pays', '')
-    ville_filter = request.args.get('ville', '')
+    selected_promo = request.args.get('promo', '')
+    selected_pays = request.args.get('pays', '')
+    selected_ville = request.args.get('ville', '')
 
     # Base query
     query = Member.query
 
     # Apply filters
-    if promo_filter:
-        query = query.filter(Member.promo == int(promo_filter))
-    if pays_filter:
-        query = query.filter(Member.pays_residence.ilike(f'%{pays_filter}%'))
-    if ville_filter:
-        query = query.filter(Member.ville_residence.ilike(f'%{ville_filter}%'))
+    if selected_promo:
+        query = query.filter(Member.promo == int(selected_promo))
+    if selected_pays:
+        query = query.filter(Member.pays_residence == selected_pays)
+    if selected_ville:
+        query = query.filter(Member.ville_residence == selected_ville)
 
     # Get distinct values for filter dropdowns
     promos = db.session.query(Member.promo).distinct().order_by(Member.promo.desc()).all()
