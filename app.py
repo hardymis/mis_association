@@ -153,6 +153,50 @@ def register():
             flash('Impossible de géocoder l\'adresse. Veuillez vérifier la ville et le pays.', 'warning')
     return render_template('register.html', form=form, pays_list=COUNTRIES)
 
+@app.route('/network-map')
+def network_map():
+    # Récupérer les filtres
+    selected_promo = request.args.get('promo')
+    selected_pays = request.args.get('pays')
+    selected_ville = request.args.get('ville')
+
+    # Construire la requête de base
+    query = Member.query
+
+    # Appliquer les filtres
+    if selected_promo:
+        query = query.filter(Member.promotion == selected_promo)
+    if selected_pays:
+        query = query.filter(Member.pays == selected_pays)
+    if selected_ville:
+        query = query.filter(Member.ville == selected_ville)
+
+    # Récupérer les listes pour les filtres
+    promos = db.session.query(Member.promotion).distinct().order_by(Member.promotion.desc()).all()
+    promos = [p[0] for p in promos]
+    pays = db.session.query(Member.pays).distinct().order_by(Member.pays).all()
+    pays = [p[0] for p in pays]
+    villes = db.session.query(Member.ville).distinct().order_by(Member.ville).all()
+    villes = [v[0] for v in villes]
+
+    # Récupérer les membres avec leurs coordonnées
+    members = query.order_by(Member.nom).all()
+    member_locations = [{
+        'name': f"{m.prenom} {m.nom}",
+        'lat': m.latitude,
+        'lng': m.longitude,
+        'info': f"Promotion {m.promotion}<br>Ville: {m.ville}, {m.pays}"
+    } for m in members if m.latitude and m.longitude]
+
+    return render_template('network_map.html',
+                         promos=promos,
+                         pays=pays,
+                         villes=villes,
+                         selected_promo=selected_promo,
+                         selected_pays=selected_pays,
+                         selected_ville=selected_ville,
+                         member_locations=member_locations)
+
 @app.route('/directory')
 def directory():
     # Get filter values from request

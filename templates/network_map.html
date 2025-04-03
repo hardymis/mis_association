@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Carte du Réseau{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<style>
+    #map {
+        height: 600px;
+        width: 100%;
+        border-radius: 8px;
+    }
+    .stats-card {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .map-container {
+        position: relative;
+    }
+    .map-overlay {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        max-width: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Filtres -->
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title h5 mb-0">
+                        <i class="bi bi-funnel-fill"></i> Filtres
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="mb-3">
+                        <div class="mb-3">
+                            <label for="promo" class="form-label">Promotion</label>
+                            <select class="form-select" id="promo" name="promo">
+                                <option value="">Toutes les promotions</option>
+                                {% for promo in promos %}
+                                <option value="{{ promo }}" {% if selected_promo|string == promo|string %}selected{% endif %}>{{ promo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pays" class="form-label">Pays</label>
+                            <select class="form-select" id="pays" name="pays">
+                                <option value="">Tous les pays</option>
+                                {% for pays_item in pays %}
+                                <option value="{{ pays_item }}" {% if selected_pays == pays_item %}selected{% endif %}>{{ pays_item }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ville" class="form-label">Ville</label>
+                            <select class="form-select" id="ville" name="ville">
+                                <option value="">Toutes les villes</option>
+                                {% for ville in villes %}
+                                <option value="{{ ville }}" {% if selected_ville == ville %}selected{% endif %}>{{ ville }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Filtrer
+                            </button>
+                            <a href="{{ url_for('network_map') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title h5 mb-0">
+                        <i class="bi bi-graph-up"></i> Statistiques
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h4 class="h6">Répartition par pays</h4>
+                        <ul class="list-unstyled">
+                            {% for pays_item in pays[:5] %}
+                            <li>
+                                <i class="bi bi-geo-alt-fill text-primary"></i>
+                                {{ pays_item }}
+                            </li>
+                            {% endfor %}
+                            {% if pays|length > 5 %}
+                            <li class="text-muted">
+                                <small>Et {{ pays|length - 5 }} autres pays...</small>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="mb-3">
+                        <h4 class="h6">Promotions représentées</h4>
+                        <ul class="list-unstyled">
+                            {% for promo in promos[:5] %}
+                            <li>
+                                <i class="bi bi-mortarboard-fill text-primary"></i>
+                                {{ promo }}
+                            </li>
+                            {% endfor %}
+                            {% if promos|length > 5 %}
+                            <li class="text-muted">
+                                <small>Et {{ promos|length - 5 }} autres promotions...</small>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte -->
+        <div class="col-md-9">
+            <div class="map-container mb-3">
+                <div id="map"></div>
+                <div class="map-overlay">
+                    <div class="stats-card shadow-sm">
+                        <h4 class="h6 mb-2">Vue d'ensemble</h4>
+                        <p class="mb-0">
+                            <i class="bi bi-people-fill text-primary"></i>
+                            <strong>{{ member_locations|length }}</strong> membres sur la carte
+                        </p>
+                        <p class="mb-0">
+                            <i class="bi bi-globe text-primary"></i>
+                            <strong>{{ pays|length }}</strong> pays représentés
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser la carte
+        var map = L.map('map', {
+            center: [0, 0],
+            zoom: 2
+        });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Ajouter les marqueurs pour chaque membre
+        var markers = [];
+        var memberLocations = JSON.parse('{{ member_locations|tojson|safe }}');
+        
+        memberLocations.forEach(function(member) {
+            var marker = L.marker([member.lat, member.lng])
+                .bindPopup('<strong>' + member.name + '</strong><br>' + member.info);
+            markers.push(marker);
+            marker.addTo(map);
+        });
+
+        // Ajuster la vue pour voir tous les marqueurs
+        if (markers.length > 0) {
+            var group = L.featureGroup(markers);
+            map.fitBounds(group.getBounds());
+        }
+    });
+</script>
+{% endblock %}
