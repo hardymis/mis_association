@@ -4,20 +4,39 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 <style>
     #map {
-        height: 600px;
+        height: calc(100vh - 120px);
         width: 100%;
-        border-radius: 8px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .stats-card {
-        background-color: rgba(255, 255, 255, 0.9);
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 20px;
+        background-color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        font-size: 0.9em;
+        max-width: 200px;
+    }
+
+    .stats-card h5 {
+        font-size: 1em;
+        margin-bottom: 8px;
+    }
+
+    .stats-card .badge {
+        font-size: 0.8em;
+        padding: 4px 8px;
     }
     .map-container {
         position: relative;
+        margin: 20px 0;
     }
     .map-overlay {
         position: absolute;
@@ -25,6 +44,127 @@
         right: 20px;
         z-index: 1000;
         max-width: 300px;
+    }
+    .filter-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .filter-card .card-header {
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+    .filter-card .card-body {
+        padding: 20px;
+    }
+    .form-select {
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        transition: all 0.2s;
+    }
+    .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+    }
+    .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    .btn-primary {
+        background: linear-gradient(45deg, #0d6efd, #0a58ca);
+        border: none;
+    }
+    .btn-secondary {
+        background: linear-gradient(45deg, #6c757d, #5a6268);
+        border: none;
+    }
+    .stats-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .stats-item i {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(13,110,253,0.1);
+        border-radius: 6px;
+        margin-right: 10px;
+        color: #0d6efd;
+    }
+    .custom-popup .leaflet-popup-content-wrapper {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .custom-popup .leaflet-popup-tip {
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    .member-list {
+        max-height: 300px;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+
+    .member-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .member-list::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.05);
+        border-radius: 3px;
+    }
+
+    .member-list::-webkit-scrollbar-thumb {
+        background: rgba(13,110,253,0.5);
+        border-radius: 3px;
+    }
+
+    .member-list::-webkit-scrollbar-thumb:hover {
+        background: rgba(13,110,253,0.7);
+    }
+
+    .member-item {
+        padding: 8px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        background: rgba(255,255,255,0.5);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(0,0,0,0.1);
+        transition: all 0.2s;
+    }
+
+    .member-item:hover {
+        background: rgba(255,255,255,0.8);
+        transform: translateY(-1px);
+    }
+
+    .member-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .marker-cluster {
+        background: rgba(13,110,253,0.6);
+        border: 2px solid white;
+        border-radius: 50%;
+        color: white;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .marker-cluster div {
+        background-color: rgba(13,110,253,0.6);
+        border-radius: 50%;
     }
 </style>
 {% endblock %}
@@ -34,18 +174,18 @@
     <div class="row">
         <!-- Filtres -->
         <div class="col-md-3">
-            <div class="card mb-3">
+            <div class="card filter-card mb-3">
                 <div class="card-header bg-primary text-white">
-                    <h3 class="card-title h5 mb-0">
-                        <i class="bi bi-funnel-fill"></i> Filtres
+                    <h3 class="card-title h5 mb-0 d-flex align-items-center">
+                        <i class="bi bi-funnel-fill me-2"></i> Filtres
                     </h3>
                 </div>
                 <div class="card-body">
                     <form method="get" class="mb-3">
                         <div class="mb-3">
-                            <label for="promo" class="form-label">Promotion</label>
+                            <label for="promo" class="form-label">MIS</label>
                             <select class="form-select" id="promo" name="promo">
-                                <option value="">Toutes les promotions</option>
+                                <option value="">Toutes les années</option>
                                 {% for promo in promos %}
                                 <option value="{{ promo }}" {% if selected_promo|string == promo|string %}selected{% endif %}>{{ promo }}</option>
                                 {% endfor %}
@@ -82,10 +222,10 @@
             </div>
 
             <!-- Statistiques -->
-            <div class="card">
+            <div class="card filter-card">
                 <div class="card-header bg-primary text-white">
-                    <h3 class="card-title h5 mb-0">
-                        <i class="bi bi-graph-up"></i> Statistiques
+                    <h3 class="card-title h5 mb-0 d-flex align-items-center">
+                        <i class="bi bi-graph-up me-2"></i> Statistiques
                     </h3>
                 </div>
                 <div class="card-body">
@@ -93,9 +233,9 @@
                         <h4 class="h6">Répartition par pays</h4>
                         <ul class="list-unstyled">
                             {% for pays_item in pays[:5] %}
-                            <li>
-                                <i class="bi bi-geo-alt-fill text-primary"></i>
-                                {{ pays_item }}
+                            <li class="stats-item">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                <span>{{ pays_item }}</span>
                             </li>
                             {% endfor %}
                             {% if pays|length > 5 %}
@@ -106,17 +246,17 @@
                         </ul>
                     </div>
                     <div class="mb-3">
-                        <h4 class="h6">Promotions représentées</h4>
+                        <h4 class="h6">Années MIS représentées</h4>
                         <ul class="list-unstyled">
                             {% for promo in promos[:5] %}
-                            <li>
-                                <i class="bi bi-mortarboard-fill text-primary"></i>
-                                {{ promo }}
+                            <li class="stats-item">
+                                <i class="bi bi-mortarboard-fill"></i>
+                                <span>{{ promo }}</span>
                             </li>
                             {% endfor %}
                             {% if promos|length > 5 %}
                             <li class="text-muted">
-                                <small>Et {{ promos|length - 5 }} autres promotions...</small>
+                                <small>Et {{ promos|length - 5 }} autres années...</small>
                             </li>
                             {% endif %}
                         </ul>
@@ -131,15 +271,22 @@
                 <div id="map"></div>
                 <div class="map-overlay">
                     <div class="stats-card shadow-sm">
-                        <h4 class="h6 mb-2">Vue d'ensemble</h4>
-                        <p class="mb-0">
-                            <i class="bi bi-people-fill text-primary"></i>
-                            <strong>{{ member_locations|length }}</strong> membres sur la carte
-                        </p>
-                        <p class="mb-0">
-                            <i class="bi bi-globe text-primary"></i>
-                            <strong>{{ pays|length }}</strong> pays représentés
-                        </p>
+                        <h5>Vue d'ensemble</h5>
+                        <div class="d-flex flex-column gap-1">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span class="text-muted">Membres</span>
+                                <span class="badge bg-primary">{{ member_locations|length }}</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span class="text-muted">Pays</span>
+                                <span class="badge bg-success">{{ pays|length }}</span>
+                            </div>
+                        </div>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span class="text-muted">Promos</span>
+                                <span class="badge bg-info">{{ promos|length }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -150,32 +297,115 @@
 
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialiser la carte
         var map = L.map('map', {
             center: [0, 0],
-            zoom: 2
+            zoom: 2,
+            zoomControl: false
         });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
+        
+        // Add custom tile layer with modern style
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors, © CARTO',
+            maxZoom: 19
+        }).addTo(map);
+        
+        // Move zoom control to the right
+        L.control.zoom({
+            position: 'topright'
         }).addTo(map);
 
-        // Ajouter les marqueurs pour chaque membre
-        var markers = [];
+        // Créer un groupe de marqueurs avec clustering
+        var markers = L.markerClusterGroup({
+            maxClusterRadius: 30,
+            spiderfyOnMaxZoom: false,
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: true,
+            iconCreateFunction: function(cluster) {
+                return L.divIcon({
+                    html: '<div class="marker-cluster">' + cluster.getChildCount() + '</div>',
+                    className: '',
+                    iconSize: L.point(30, 30)
+                });
+            }
+        });
+
+        // Organiser les membres par coordonnées
+        var membersByLocation = {};
         var memberLocations = JSON.parse('{{ member_locations|tojson|safe }}');
         
         memberLocations.forEach(function(member) {
-            var marker = L.marker([member.lat, member.lng])
-                .bindPopup('<strong>' + member.name + '</strong><br>' + member.info);
-            markers.push(marker);
-            marker.addTo(map);
+            var key = member.lat + ',' + member.lng;
+            if (!membersByLocation[key]) {
+                membersByLocation[key] = [];
+            }
+            membersByLocation[key].push(member);
         });
 
+        // Créer les marqueurs
+        Object.keys(membersByLocation).forEach(function(key) {
+            var coords = key.split(',');
+            var members = membersByLocation[key];
+            var customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: '<div style="background-color: #0d6efd; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>',
+                iconSize: [12, 12],
+                iconAnchor: [6, 6]
+            });
+
+            var popupContent = '<div class="p-3">';
+            if (members.length > 1) {
+                popupContent += '<h6 class="mb-3">' + members[0].info.split(',')[1].trim() + ' (' + members.length + ' membres)</h6>';
+                popupContent += '<div class="member-list">';
+                members.forEach(function(member) {
+                    popupContent += '<div class="member-item">';
+                    popupContent += '<div class="mb-2">';
+                    popupContent += '<strong>' + member.name + '</strong><br>';
+                    popupContent += '<span class="badge bg-primary">' + member.info.split(',')[0].trim() + '</span>';
+                    popupContent += '</div>';
+                    popupContent += '<p class="mb-2"><img src="/static/images/location.png" style="width: 12px; margin-right: 5px; vertical-align: middle;">' + member.info.split(',')[1].trim() + ', ' + member.info.split(',')[2].trim() + '</p>';
+                    popupContent += '<div class="d-flex gap-2">';
+                    popupContent += '<a href="mailto:' + member.email + '" class="btn btn-sm btn-outline-primary d-flex align-items-center"><img src="/static/images/email.png" style="width: 16px; margin-right: 5px;"> Email</a>';
+                    var linkedinUrl = member.linkedin_url || 'https://www.linkedin.com';
+                    popupContent += '<a href="' + linkedinUrl + '" target="_blank" class="btn btn-sm btn-outline-primary d-flex align-items-center"><img src="/static/images/linkedin.svg" style="width: 16px; margin-right: 5px;"> LinkedIn</a>';
+                    popupContent += '</div>';
+                    popupContent += '</div>';
+                });
+                popupContent += '</div>';
+            } else {
+                var member = members[0];
+                popupContent += '<div class="mb-2">';
+                popupContent += '<strong>' + member.name + '</strong><br>';
+                popupContent += '<span class="badge bg-primary">' + member.info.split(',')[0].trim() + '</span>';
+                popupContent += '</div>';
+                popupContent += '<p class="mb-2"><img src="/static/images/location.png" style="width: 12px; margin-right: 5px; vertical-align: middle;">' + member.info.split(',')[1].trim() + ', ' + member.info.split(',')[2].trim() + '</p>';
+                popupContent += '<div class="d-flex gap-2">';
+                popupContent += '<a href="mailto:' + member.email + '" class="btn btn-sm btn-outline-primary d-flex align-items-center"><img src="/static/images/email.png" style="width: 16px; margin-right: 5px;"> Email</a>';
+                if (member.linkedin_url) {
+                    popupContent += '<a href="' + member.linkedin_url + '" target="_blank" class="btn btn-sm btn-outline-primary d-flex align-items-center"><img src="/static/images/linkedin.png" style="width: 16px; margin-right: 5px;"> LinkedIn</a>';
+                }
+                popupContent += '</div>';
+            }
+            popupContent += '</div>';
+
+            var marker = L.marker([parseFloat(coords[0]), parseFloat(coords[1])], { icon: customIcon })
+                .bindPopup(popupContent, {
+                    className: 'custom-popup',
+                    closeButton: false,
+                    maxWidth: 300
+                });
+
+            markers.addLayer(marker);
+        });
+
+        map.addLayer(markers);
+
         // Ajuster la vue pour voir tous les marqueurs
-        if (markers.length > 0) {
-            var group = L.featureGroup(markers);
-            map.fitBounds(group.getBounds());
+        if (Object.keys(membersByLocation).length > 0) {
+            map.fitBounds(markers.getBounds());
         }
     });
 </script>
